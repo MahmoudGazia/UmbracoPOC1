@@ -1,4 +1,7 @@
 ﻿@using Umbraco.Cms.Web.Common.PublishedModels;
+@using Umbraco.Cms.Core.Security;
+@using UmbracoPOC1.Controllers;
+@inject IMemberManager MemberManager
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<ContentModels.AccountPage>
 @using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;
 @{
@@ -6,6 +9,9 @@
 	var pageHeading = Model.HasValue("pageHeading") ? Model.Value<string>("pageHeading") : Model.Name;
 	var loginTitle = Model.HasValue("loginTitle") ? Model.Value<string>("loginTitle") : "Login to Your Account";
 	var registerTitle = Model.HasValue("registerTitle") ? Model.Value<string>("registerTitle") : "Create New Account";
+
+	var currentMember = await MemberManager.GetCurrentMemberAsync();
+	var isLoggedIn = currentMember != null;
 }
 
 <!-- Page Header -->
@@ -28,128 +34,183 @@
 <!-- Login & Register Forms -->
 <section class="py-5">
 	<div class="container">
-		<div class="row g-4">
-			<!-- Login Form -->
-			<div class="col-lg-6">
-				<div class="card border-0 shadow-sm h-100">
-					<div class="card-body p-4 p-lg-5">
-						<h3 class="card-title fw-bold mb-4">@loginTitle</h3>
-						<form id="loginForm" method="post" action="#" novalidate>
-							<div class="mb-3">
-								<label for="loginEmail" class="form-label">Email Address <span class="text-danger">*</span></label>
-								<div class="input-group">
-									<span class="input-group-text"><i class="bi bi-envelope"></i></span>
-									<input type="email" class="form-control" id="loginEmail" name="loginEmail" placeholder="Enter your email" required>
-									<div class="invalid-feedback">
-										Please enter a valid email address.
+		@if (TempData["Success"] != null)
+		{
+			<div class="alert alert-success alert-dismissible fade show" role="alert">
+				<i class="bi bi-check-circle me-2"></i>@TempData["Success"]
+				<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+			</div>
+		}
+
+		@if (isLoggedIn)
+		{
+			<!-- Member Dashboard -->
+			<div class="row justify-content-center">
+				<div class="col-lg-8">
+					<div class="card border-0 shadow-sm">
+						<div class="card-body p-5 text-center">
+							<div class="mb-4">
+								<div class="bg-primary bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 100px; height: 100px;">
+									<i class="bi bi-person-circle" style="font-size: 4rem;"></i>
+								</div>
+							</div>
+							<h2 class="fw-bold mb-3">Welcome Back, @currentMember!.Name!</h2>
+							<p class="lead text-muted mb-4">You are successfully logged in to your account.</p>
+
+							<div class="row g-3 mb-4">
+								<div class="col-md-6">
+									<div class="card bg-light border-0">
+										<div class="card-body">
+											<h6 class="text-muted mb-1">Email</h6>
+											<p class="mb-0 fw-semibold">@currentMember.Email</p>
+										</div>
+									</div>
+								</div>
+								<div class="col-md-6">
+									<div class="card bg-light border-0">
+										<div class="card-body">
+											<h6 class="text-muted mb-1">Status</h6>
+											<p class="mb-0 fw-semibold"><span class="badge bg-success">Active</span></p>
+										</div>
 									</div>
 								</div>
 							</div>
-							<div class="mb-3">
-								<label for="loginPassword" class="form-label">Password <span class="text-danger">*</span></label>
-								<div class="input-group">
-									<span class="input-group-text"><i class="bi bi-lock"></i></span>
-									<input type="password" class="form-control" id="loginPassword" name="loginPassword" placeholder="Enter your password" required>
-									<div class="invalid-feedback">
-										Please enter your password.
-									</div>
-								</div>
+
+							<div class="d-grid gap-2 d-md-flex justify-content-md-center">
+								<form method="post" action="@Url.SurfaceAction("HandleLogout", "MemberAuth")">
+									@Html.AntiForgeryToken()
+									<button type="submit" class="btn btn-outline-danger btn-lg">
+										<i class="bi bi-box-arrow-right me-2"></i>Logout
+									</button>
+								</form>
 							</div>
-							<div class="mb-3 form-check">
-								<input type="checkbox" class="form-check-input" id="rememberMe">
-								<label class="form-check-label" for="rememberMe">Remember me</label>
-							</div>
-							<button type="submit" class="btn btn-primary btn-lg w-100 mb-3">
-								<i class="bi bi-box-arrow-in-right me-2"></i>Login
-							</button>
-							<div class="text-center">
-								<a href="#" class="text-decoration-none">Forgot Password?</a>
-							</div>
-						</form>
+						</div>
 					</div>
 				</div>
 			</div>
+		}
+		else
+		{
+			<!-- Login & Register Forms -->
+			<div class="row g-4">
+				<!-- Login Form -->
+				<div class="col-lg-6">
+					<div class="card border-0 shadow-sm h-100">
+						<div class="card-body p-4 p-lg-5">
+							<h3 class="card-title fw-bold mb-4">@loginTitle</h3>
 
-			<!-- Register Form -->
-			<div class="col-lg-6">
-				<div class="card border-0 shadow-sm h-100">
-					<div class="card-body p-4 p-lg-5">
-						<h3 class="card-title fw-bold mb-4">@registerTitle</h3>
-						<form id="registerForm" method="post" action="#" novalidate>
-							<div class="row g-3">
-								<div class="col-md-6">
-									<label for="firstName" class="form-label">First Name <span class="text-danger">*</span></label>
-									<input type="text" class="form-control" id="firstName" name="firstName" required>
-									<div class="invalid-feedback">
-										Please enter your first name.
-									</div>
+							@if (TempData["LoginError"] != null)
+							{
+								<div class="alert alert-danger alert-dismissible fade show" role="alert">
+									<i class="bi bi-exclamation-triangle me-2"></i>@TempData["LoginError"]
+									<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 								</div>
-								<div class="col-md-6">
-									<label for="lastName" class="form-label">Last Name <span class="text-danger">*</span></label>
-									<input type="text" class="form-control" id="lastName" name="lastName" required>
-									<div class="invalid-feedback">
-										Please enter your last name.
-									</div>
-								</div>
-								<div class="col-12">
-									<label for="registerEmail" class="form-label">Email Address <span class="text-danger">*</span></label>
+							}
+
+							<form method="post" action="@Url.SurfaceAction("HandleLogin", "MemberAuth")">
+								@Html.AntiForgeryToken()
+								<div class="mb-3">
+									<label for="Email" class="form-label">Email Address <span class="text-danger">*</span></label>
 									<div class="input-group">
 										<span class="input-group-text"><i class="bi bi-envelope"></i></span>
-										<input type="email" class="form-control" id="registerEmail" name="registerEmail" placeholder="your.email@example.com" required>
-										<div class="invalid-feedback">
-											Please enter a valid email address.
-										</div>
+										<input type="email" class="form-control" id="Email" name="Email" placeholder="Enter your email" required>
 									</div>
 								</div>
-								<div class="col-12">
-									<label for="registerPhone" class="form-label">Phone Number</label>
-									<div class="input-group">
-										<span class="input-group-text"><i class="bi bi-telephone"></i></span>
-										<input type="tel" class="form-control" id="registerPhone" name="registerPhone" placeholder="+1 (555) 000-0000">
-									</div>
-								</div>
-								<div class="col-12">
-									<label for="registerPassword" class="form-label">Password <span class="text-danger">*</span></label>
+								<div class="mb-3">
+									<label for="Password" class="form-label">Password <span class="text-danger">*</span></label>
 									<div class="input-group">
 										<span class="input-group-text"><i class="bi bi-lock"></i></span>
-										<input type="password" class="form-control" id="registerPassword" name="registerPassword" required>
-										<div class="invalid-feedback">
-											Password must be at least 8 characters.
-										</div>
-									</div>
-									<small class="text-muted">Minimum 8 characters, include uppercase, lowercase, and number</small>
-								</div>
-								<div class="col-12">
-									<label for="confirmPassword" class="form-label">Confirm Password <span class="text-danger">*</span></label>
-									<div class="input-group">
-										<span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
-										<input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
-										<div class="invalid-feedback">
-											Passwords do not match.
-										</div>
+										<input type="password" class="form-control" id="Password" name="Password" placeholder="Enter your password" required>
 									</div>
 								</div>
-								<div class="col-12">
-									<div class="form-check">
-										<input class="form-check-input" type="checkbox" id="agreeTerms" required>
-										<label class="form-check-label" for="agreeTerms">
-											I agree to the <a href="#">Terms and Conditions</a> <span class="text-danger">*</span>
-										</label>
-										<div class="invalid-feedback">
-											You must agree before submitting.
-										</div>
-									</div>
+								<div class="mb-3 form-check">
+									<input type="checkbox" class="form-check-input" id="RememberMe" name="RememberMe">
+									<label class="form-check-label" for="RememberMe">Remember me</label>
 								</div>
-								<div class="col-12">
-									<button type="submit" class="btn btn-success btn-lg w-100">
-										<i class="bi bi-person-plus me-2"></i>Create Account
+									<button type="submit" class="btn btn-primary btn-lg w-100 mb-3">
+										<i class="bi bi-box-arrow-in-right me-2"></i>Login
 									</button>
+									<div class="text-center">
+										<a href="#" class="text-decoration-none">Forgot Password?</a>
+									</div>
+								</form>
+						</div>
+					</div>
+				</div>
+
+				<!-- Register Form -->
+				<div class="col-lg-6">
+					<div class="card border-0 shadow-sm h-100">
+						<div class="card-body p-4 p-lg-5">
+							<h3 class="card-title fw-bold mb-4">@registerTitle</h3>
+
+							@if (TempData["RegisterError"] != null)
+							{
+								<div class="alert alert-danger alert-dismissible fade show" role="alert">
+									<i class="bi bi-exclamation-triangle me-2"></i>@TempData["RegisterError"]
+									<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 								</div>
-							</div>
-						</form>
+							}
+
+							<form method="post" action="@Url.SurfaceAction("HandleRegister", "MemberAuth")">
+								@Html.AntiForgeryToken()
+								<div class="row g-3">
+									<div class="col-md-6">
+										<label for="FirstName" class="form-label">First Name <span class="text-danger">*</span></label>
+										<input type="text" class="form-control" id="FirstName" name="FirstName" required>
+									</div>
+									<div class="col-md-6">
+										<label for="LastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+										<input type="text" class="form-control" id="LastName" name="LastName" required>
+									</div>
+									<div class="col-12">
+										<label for="Email" class="form-label">Email Address <span class="text-danger">*</span></label>
+										<div class="input-group">
+											<span class="input-group-text"><i class="bi bi-envelope"></i></span>
+											<input type="email" class="form-control" id="RegisterEmail" name="Email" placeholder="your.email@example.com" required>
+										</div>
+									</div>
+									<div class="col-12">
+										<label for="PhoneNumber" class="form-label">Phone Number</label>
+										<div class="input-group">
+											<span class="input-group-text"><i class="bi bi-telephone"></i></span>
+											<input type="tel" class="form-control" id="PhoneNumber" name="PhoneNumber" placeholder="+1 (555) 000-0000">
+										</div>
+									</div>
+									<div class="col-12">
+										<label for="RegisterPassword" class="form-label">Password <span class="text-danger">*</span></label>
+										<div class="input-group">
+											<span class="input-group-text"><i class="bi bi-lock"></i></span>
+											<input type="password" class="form-control" id="RegisterPassword" name="Password" required minlength="8">
+										</div>
+										<small class="text-muted">Minimum 8 characters, include uppercase, lowercase, and number</small>
+									</div>
+									<div class="col-12">
+										<label for="ConfirmPassword" class="form-label">Confirm Password <span class="text-danger">*</span></label>
+										<div class="input-group">
+											<span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+											<input type="password" class="form-control" id="ConfirmPassword" name="ConfirmPassword" required>
+										</div>
+									</div>
+									<div class="col-12">
+											<div class="form-check">
+												<input class="form-check-input" type="checkbox" id="AgreeToTerms" name="AgreeToTerms" value="true" required>
+												<label class="form-check-label" for="AgreeToTerms">
+													I agree to the <a href="#">Terms and Conditions</a> <span class="text-danger">*</span>
+												</label>
+											</div>
+										</div>
+									<div class="col-12">
+												<button type="submit" class="btn btn-success btn-lg w-100">
+														<i class="bi bi-person-plus me-2"></i>Create Account
+													</button>
+												</div>
+											</div>
+										</form>
+						</div>
 					</div>
 				</div>
 			</div>
-		</div>
+		}
 	</div>
 </section>

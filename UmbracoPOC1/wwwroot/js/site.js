@@ -4,7 +4,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     'use strict';
 
-    // Contact Form Validation
+    // Contact Form Validation (only for non-Umbraco forms)
     const contactForm = document.getElementById('contactForm');
     if (contactForm) {
         contactForm.addEventListener('submit', function (event) {
@@ -19,70 +19,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }, false);
     }
 
-    // Login Form Validation
-    const loginForm = document.getElementById('loginForm');
-    if (loginForm) {
-        loginForm.addEventListener('submit', function (event) {
-            if (!loginForm.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-            } else {
-                event.preventDefault();
-                handleLoginFormSubmit(loginForm);
-            }
-            loginForm.classList.add('was-validated');
-        }, false);
-    }
-
-    // Register Form Validation
-    const registerForm = document.getElementById('registerForm');
-    if (registerForm) {
-        const password = document.getElementById('registerPassword');
-        const confirmPassword = document.getElementById('confirmPassword');
-
-        registerForm.addEventListener('submit', function (event) {
-            // Check password match
-            if (password.value !== confirmPassword.value) {
-                confirmPassword.setCustomValidity("Passwords don't match");
-            } else {
-                confirmPassword.setCustomValidity('');
-            }
-
-            // Check password strength
-            if (!validatePassword(password.value)) {
-                password.setCustomValidity('Password must be at least 8 characters and include uppercase, lowercase, and number');
-            } else {
-                password.setCustomValidity('');
-            }
-
-            if (!registerForm.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-            } else {
-                event.preventDefault();
-                handleRegisterFormSubmit(registerForm);
-            }
-            registerForm.classList.add('was-validated');
-        }, false);
-
-        // Real-time password match validation
-        confirmPassword.addEventListener('input', function () {
-            if (password.value === confirmPassword.value) {
-                confirmPassword.setCustomValidity('');
-            } else {
-                confirmPassword.setCustomValidity("Passwords don't match");
-            }
-        });
-
-        // Real-time password strength validation
-        password.addEventListener('input', function () {
-            if (validatePassword(password.value)) {
-                password.setCustomValidity('');
-            } else {
-                password.setCustomValidity('Password must be at least 8 characters and include uppercase, lowercase, and number');
-            }
-        });
-    }
+    // Note: Login and Register forms now use server-side validation via Umbraco Surface Controllers
+    // JavaScript validation removed to allow proper form submission
 });
 
 // Password Validation Function

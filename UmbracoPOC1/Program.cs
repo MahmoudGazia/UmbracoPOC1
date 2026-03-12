@@ -1,5 +1,13 @@
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
+// Enable Razor Runtime Compilation for Development
+#if DEBUG
+builder.Services.AddRazorPages().AddRazorRuntimeCompilation();
+#endif
+
+// Explicitly add MVC services to ensure Surface Controllers are discovered
+builder.Services.AddControllersWithViews();
+
 builder.CreateUmbracoBuilder()
     .AddBackOffice()
     .AddWebsite()

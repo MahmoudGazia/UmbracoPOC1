@@ -1,4 +1,6 @@
 ﻿@using Umbraco.Cms.Web.Common.PublishedModels;
+@using Umbraco.Cms.Core.Security;
+@inject IMemberManager MemberManager
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
 @using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;
 @{
@@ -6,6 +8,8 @@
 	var pageTitle = Model.HasValue("pageTitle") ? Model.Value<string>("pageTitle") : Model.Name;
 	var metaDescription = Model.HasValue("metaDescription") ? Model.Value<string>("metaDescription") : "";
 	var siteRoot = Model.Root();
+	var currentMember = await MemberManager.GetCurrentMemberAsync();
+	var isLoggedIn = currentMember != null;
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -34,16 +38,36 @@
 					<span class="navbar-toggler-icon"></span>
 				</button>
 				<div class="collapse navbar-collapse" id="navbarNav">
-					<ul class="navbar-nav ms-auto">
-						@foreach (var item in siteRoot.Children().Where(x => x.IsVisible()))
-						{
-							var isActive = item.Id == Model.Id || Model.AncestorsOrSelf().Any(x => x.Id == item.Id);
-							<li class="nav-item">
-								<a class="nav-link @(isActive ? "active" : "")" href="@item.Url()">@item.Name</a>
-							</li>
-						}
-					</ul>
-				</div>
+						<ul class="navbar-nav ms-auto">
+							@foreach (var item in siteRoot.Children().Where(x => x.IsVisible()))
+							{
+								var isActive = item.Id == Model.Id || Model.AncestorsOrSelf().Any(x => x.Id == item.Id);
+								<li class="nav-item">
+									<a class="nav-link @(isActive ? "active" : "")" href="@item.Url()">@item.Name</a>
+								</li>
+							}
+							@if (isLoggedIn)
+							{
+								<li class="nav-item dropdown">
+									<a class="nav-link dropdown-toggle" href="#" id="memberDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+										<i class="bi bi-person-circle me-1"></i>@currentMember.Name
+									</a>
+									<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="memberDropdown">
+										<li><a class="dropdown-item" href="/account"><i class="bi bi-person me-2"></i>My Account</a></li>
+										<li><hr class="dropdown-divider"></li>
+										<li>
+											<form method="post" action="/umbraco/surface/MemberAuth/HandleLogout" class="d-inline">
+												@Html.AntiForgeryToken()
+												<button type="submit" class="dropdown-item text-danger">
+													<i class="bi bi-box-arrow-right me-2"></i>Logout
+												</button>
+											</form>
+										</li>
+									</ul>
+								</li>
+							}
+						</ul>
+					</div>
 			</div>
 		</nav>
 	</header>
